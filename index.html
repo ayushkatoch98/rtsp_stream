@@ -1,0 +1,104 @@
+<html>
+
+<head>
+
+    <title> Hello, World </title>
+
+    <link href="https://vjs.zencdn.net/7.18.1/video-js.css" rel="stylesheet" />
+</head>
+
+<body>
+
+    <h1> Hello, World</h1>
+    <video id="my-video" class="video-js" controls width="640" height="264" poster="poster.jpg" muted data-setup="{}">
+        <source src="http://localhost:8000/myvid.m3u8" type="application/x-mpegURL" />
+        <p class="vjs-no-js">
+            To view this video please enable JavaScript, and consider upgrading to a
+            web browser that
+            <a href="https://videojs.com/html5-video-support/" target="_blank">supports HTML5 video</a>
+        </p>
+    </video>
+    <h4> It usually takes 10 - 20 seconds for the video to start playing. In the backend FFMPEG is capturing the 
+        live stream and converting it into small chunks. <br> This process usually starts when user 
+        clicks on the play button
+    </h4>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://vjs.zencdn.net/7.18.1/video.min.js"></script>
+    <script>
+
+        const VIDEO_JS_ID = "my-video";
+        const TOTTAL_RETRIES = 20;
+        var RETRIES = TOTTAL_RETRIES;
+
+        var player = videojs(VIDEO_JS_ID);
+        player.on("error" , onError);
+        player.on("play" , onPlay);
+        player.on("pause" , onPause);
+        player.on("stop" , onStop)
+
+        // to play and pause video programmatically 
+        // player.play()
+        // play.pause()
+
+
+        function setSource(player , url , type = 'application/x-mpegURL'){
+            player.src({
+                "type" : type,
+                "src" : url
+            });
+        }
+
+        function onError(err){
+            error = player.error();
+
+            errorCode = error["code"];
+
+
+            if (errorCode == 2 || errorCode == 4){
+                console.log(error["message"]);
+
+                // here we are assuming that the file we are trying to 
+                // play doesnt exist and will be made after some time 
+                // since ffmpeg conversion is working in the backend
+                // and it takes time for ffmpeg to start producing files 
+
+                window.setTimeout( function(){
+                    setSource(player , player.src());
+                    player.play();
+                    RETRIES -= 1;
+
+                    if(RETRIES <= 0){
+                        RETRIES = TOTTAL_RETRIES;
+                        player.stop();
+                    }
+                } , 2000);
+                
+
+                return;
+            }
+
+            console.log("Unknown Error" , player.error());
+
+        }
+
+        function onPlay(a){
+            console.log("Play callback");
+        }
+        
+        function onPause(a){
+            console.log("Pause callback");
+        }
+        
+        function onStop(a){
+            console.log("Stop callback");
+        }
+
+
+
+
+
+    </script>
+</body>
+
+</html>
